@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\LatheController;
 use App\Http\Controllers\Api\RegisterController;
+use App\Http\Controllers\Api\UserLatheTrackingController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -25,6 +26,7 @@ Route::post('login', [RegisterController::class, 'login']);
 Route::middleware('auth:api')->group(function () {
     Route::apiResource('/users', UserController::class);
     Route::apiResource('/lathes', LatheController::class);
+    Route::apiResource('/tracking', UserLatheTrackingController::class);
 });
 
 

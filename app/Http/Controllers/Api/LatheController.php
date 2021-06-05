@@ -15,6 +15,6 @@ class LatheController extends BaseController
     {
         $lathes = Lathe::all();
 
-        return $this->sendResponse(LatheResource::collection($lathes), 'retrieved successfully.');
+        return $this->sendResponse(LatheResource::collection($lathes), 'Lathes retrieved successfully.');
     }
 }

@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class UserLatheTracking extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['user_id', 'lathe_id', 'start', 'finish'];
 }

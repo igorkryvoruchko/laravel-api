@@ -17,11 +17,9 @@ class CreateUserLatheTrackingsTable extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users');
             $table->foreignId('lathe_id')->constrained('lathes');
-            $table->boolean('status');
+            $table->dateTime('start');
+            $table->dateTime('finish')->nullable();
             $table->timestamps();
-
-
-
         });
     }
 
