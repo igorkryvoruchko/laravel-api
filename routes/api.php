@@ -26,7 +26,11 @@ Route::post('login', [RegisterController::class, 'login']);
 Route::middleware('auth:api')->group(function () {
     Route::apiResource('/users', UserController::class);
     Route::apiResource('/lathes', LatheController::class);
-    Route::apiResource('/tracking', UserLatheTrackingController::class);
+
+    Route::post('/tracking/store', UserLatheTrackingController::class.'@store');
+    Route::patch('/tracking/update', UserLatheTrackingController::class.'@update');
+
+    Route::get('/tracking/user/{id}', UserLatheTrackingController::class.'@getUserHistory');
 });
 
 
