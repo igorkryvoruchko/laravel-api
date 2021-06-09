@@ -1,18 +1,18 @@
 <?php
 
-
 namespace App\Services;
 
-
+use App\Exceptions\ValidatorException;
+use App\Models\Lathe;
+use App\Models\User;
 use App\Models\UserLatheTracking;
 use App\Repositories\UserLatheTrackingRepository;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Validator;
-use phpDocumentor\Reflection\Types\This;
 
 class UserLatheTrackingService
 {
-
     /**
      * UserLatheTrackingService constructor.
      * @param UserLatheTrackingRepository $userLatheTrackingRepository
@@ -26,7 +26,7 @@ class UserLatheTrackingService
     /**
      * @param $input
      * @return UserLatheTracking
-     * @throws \Exception
+     * @throws ValidatorException
      */
     public function store($input): UserLatheTracking
     {
@@ -36,11 +36,18 @@ class UserLatheTrackingService
         ]);
 
         if ($validator->fails()) {
-            throw new \Exception('Validation Error.', $validator->errors());
+            throw new ValidatorException(
+                'Validation Error.',
+                400,
+                null,
+                [
+                    'errors' => $validator->errors()
+                ]
+            );
         }
 
         if ($this->userLatheTrackingRepository->getTrackingWithNullFinish($input)) {
-            throw new \Exception('This lathe is busy');
+            throw new ValidatorException('This lathe is busy', 400);
         }
 
         $tracking = new UserLatheTracking();
@@ -55,7 +62,7 @@ class UserLatheTrackingService
     /**
      * @param $input
      * @return mixed
-     * @throws \Exception
+     * @throws ValidatorException
      */
     public function update($input): mixed
     {
@@ -65,13 +72,20 @@ class UserLatheTrackingService
         ]);
 
         if ($validator->fails()) {
-            throw new \Exception('Validation Error.', $validator->errors());
+            throw new ValidatorException(
+                'Validation Error.',
+                400,
+                null,
+                [
+                    'errors' => $validator->errors()
+                ]
+            );
         }
 
         $tracking = $this->userLatheTrackingRepository->getTrackingWithNullFinish($input);
 
         if(!$tracking) {
-            throw new \Exception('This user do not work at this lathe now');
+            throw new ValidatorException('This user do not work at this lathe now', 400);
         }
 
         $tracking->finish = Carbon::now();
@@ -92,27 +106,48 @@ class UserLatheTrackingService
     /**
      * @param $id
      * @return mixed
+     * @throws Exception
      */
     public function getLatheHistory($id): mixed
     {
+        if (!Lathe::find($id)) {
+            throw new Exception('Lathe not found',404);
+        }
+
         return $this->userLatheTrackingRepository->getLatheHistory($id);
     }
 
     /**
      * @param $id
      * @return mixed
+     * @throws Exception
      */
     public function getUserCurrentInfo($id): mixed
     {
+        if (!User::find($id)) {
+            throw new Exception('User not found',404);
+        }
+
         return $this->userLatheTrackingRepository->getUserCurrentInfo($id);
     }
 
     /**
      * @param $id
      * @return mixed
+     * @throws Exception
      */
     public function getLatheCurrentInfo($id): mixed
     {
-        return $this->userLatheTrackingRepository->getLatheCurrentInfo($id);
+        if (!Lathe::find($id)) {
+            throw new Exception('Lathe not found',404);
+        }
+
+        $currentUserInfo = $this->userLatheTrackingRepository->getLatheCurrentInfo($id);
+
+        if (!$currentUserInfo) {
+            throw new Exception('Lathe is free');
+        }
+
+        return $currentUserInfo;
     }
 }
