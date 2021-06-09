@@ -31,6 +31,10 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/tracking/update', UserLatheTrackingController::class.'@update');
 
     Route::get('/tracking/user/{id}', UserLatheTrackingController::class.'@getUserHistory');
+    Route::get('/tracking/lathe/{id}', UserLatheTrackingController::class.'@getLatheHistory');
+
+    Route::get('/tracking/user/info/{id}', UserLatheTrackingController::class.'@getUserCurrentInfo');
+    Route::get('/tracking/lathe/info/{id}', UserLatheTrackingController::class.'@getLatheCurrentInfo');
 });
 
 

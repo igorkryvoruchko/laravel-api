@@ -16,8 +16,8 @@ class UserLatheTracking extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
-            'lathe_id' => $this->lathe_id,
+            'user' => $this->user,
+            'lathe' => $this->lathe,
             'start' => $this->start,
             'finish' => $this->finish,
             'created_at' => $this->created_at->format('d-m-Y H:m:s'),

@@ -3,24 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\UserLatheTracking as UserLatheTrackingResource;
+use App\Models\Lathe;
 use App\Models\User;
-use App\Models\UserLatheTracking;
-use Carbon\Carbon;
+use App\Services\UserLatheTrackingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\Validator;
+
 
 class UserLatheTrackingController extends BaseController
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return JsonResponse
+     * UserLatheTrackingController constructor.
+     * @param UserLatheTrackingService $userLatheTrackingService
      */
-    public function index(): JsonResponse
+    public function __construct(
+        private UserLatheTrackingService $userLatheTrackingService
+    )
     {
-        //
     }
 
     /**
@@ -33,24 +32,13 @@ class UserLatheTrackingController extends BaseController
     {
         $input = $request->all();
 
-        $validator = Validator::make($input, [
-            'user_id' => 'required',
-            'lathe_id' => 'required'
-        ]);
-
-        if ($validator->fails()) {
-            return $this->sendError('Validation Error.', $validator->errors());
+        try {
+            $tracking = $this->userLatheTrackingService->store($input);
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
         }
 
-        if (UserLatheTracking::where('lathe_id', $input['lathe_id'])->where('finish', null)->first()) {
-            return $this->sendError('This lathe is busy');
-        }
-
-        $input['start'] = Carbon::now();
-
-        $tracker = UserLatheTracking::create($input);
-
-        return $this->sendResponse(new UserLatheTrackingResource($tracker), 'User start working successfully.');
+        return $this->sendResponse(new UserLatheTrackingResource($tracking), 'User start working successfully.');
     }
 
     /**
@@ -63,27 +51,13 @@ class UserLatheTrackingController extends BaseController
     {
         $input = $request->all();
 
-        $validator = Validator::make($input, [
-            'user_id' => 'required',
-            'lathe_id' => 'required'
-        ]);
-
-        if ($validator->fails()) {
-            return $this->sendError('Validation Error.', $validator->errors());
+        try {
+            $tracking = $this->userLatheTrackingService->update($input);
+        } catch(\Exception $exception) {
+            return $this->sendError($exception->getMessage());
         }
 
-        $tracker = UserLatheTracking::where('user_id', $input['user_id'])
-            ->where('lathe_id', $input['lathe_id'])
-        ->where('finish', null)->first();
-
-        if(!$tracker) {
-            return $this->sendError('This user do not work at this lathe');
-        }
-
-        $tracker->finish = Carbon::now();
-        $tracker->save();
-
-        return $this->sendResponse(new UserLatheTrackingResource($tracker), 'User finish working successfully.');
+        return $this->sendResponse(new UserLatheTrackingResource($tracking), 'User finish working successfully.');
     }
 
     /**
@@ -92,12 +66,61 @@ class UserLatheTrackingController extends BaseController
      */
     public function getUserHistory($id): JsonResponse
     {
-        $userHistory = UserLatheTracking::where('user_id', $id)->paginate(1);
-
-        if (!count($userHistory)) {
-            return $this->sendError('User history not found', [],404);
+        if (!User::find($id)) {
+            return $this->sendError('User not found', [],404);
         }
 
+        $userHistory = $this->userLatheTrackingService->getUserHistory($id);
+
         return $this->sendResponse(UserLatheTrackingResource::collection($userHistory), 'User history retrieved successfully.');
+    }
+
+    /**
+     * @param $id
+     * @return JsonResponse
+     */
+    public function getLatheHistory($id): JsonResponse
+    {
+        if (!Lathe::find($id)) {
+            return $this->sendError('Lathe not found', [],404);
+        }
+
+        $latheHistory = $this->userLatheTrackingService->getLatheHistory($id);
+
+        return $this->sendResponse(UserLatheTrackingResource::collection($latheHistory), 'Lathe history retrieved successfully.');
+    }
+
+    /**
+     * @param $id
+     * @return JsonResponse
+     */
+    public function getUserCurrentInfo($id): JsonResponse
+    {
+        if (!User::find($id)) {
+            return $this->sendError('User not found', [],404);
+        }
+
+        $currentLathes = $this->userLatheTrackingService->getUserCurrentInfo($id);
+
+        return $this->sendResponse(UserLatheTrackingResource::collection($currentLathes), 'Current lathes for user retrieved successfully.');
+    }
+
+    /**
+     * @param $id
+     * @return JsonResponse
+     */
+    public function getLatheCurrentInfo($id): JsonResponse
+    {
+        if (!Lathe::find($id)) {
+            return $this->sendError('Lathe not found', [],404);
+        }
+
+        $currentUser = $this->userLatheTrackingService->getLatheCurrentInfo($id);
+
+        if (!$currentUser) {
+            return $this->sendError('Lathe is free');
+        }
+
+        return $this->sendResponse(new UserLatheTrackingResource($currentUser), 'Current user for lathe retrieved successfully.');
     }
 }
